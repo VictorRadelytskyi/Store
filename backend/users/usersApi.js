@@ -4,9 +4,10 @@ import { Op } from 'sequelize';
 import Users from './users.js';
 import authenticate from '../middleware/authenticate.js';
 import authorize from '../middleware/authorize.js';
+import {generateRefreshToken, generateAccessToken} from '../middleware/tokenService.js';
 const router = Router();
 
-const saltRounds = process.env.saltRounds || 12;
+const SALT_ROUNDS = process.env.SALT_ROUNDS || 12;
 
 // admin-only endpoint to get all users
 router.get('/', authenticate, authorize(['admin']), async (req, res) => {
@@ -21,22 +22,14 @@ router.get('/', authenticate, authorize(['admin']), async (req, res) => {
     }
 });
 
-// admin-only endpoint to create a user
-router.post('/create', authenticate, authorize(['admin']), async (req, res) => {
+// endpoint to create a user
+router.post('/register', async (req, res) => {
     try{
-        const { email, password, firstName, lastName, role } = req.body;
+        const { email, password, firstName, lastName } = req.body;
         
         if (!email || !password || !firstName || !lastName ){
             return res.status(400).json({
                 error: "Email, password, first name and last name should be submitted"
-            });
-        }
-
-        // Validate role if provided
-        const validRoles = ['user', 'admin'];
-        if (role && !validRoles.includes(role)) {
-            return res.status(400).json({
-                error: "Invalid role. Role must be either 'user' or 'admin'"
             });
         }
 
@@ -60,14 +53,13 @@ router.post('/create', authenticate, authorize(['admin']), async (req, res) => {
             });
         }
 
-        const passHash = await bcrypt.hash(password, saltRounds);
+        const passHash = await bcrypt.hash(password, SALT_ROUNDS);
         
         const user = await Users.create({
             email: email.toLowerCase().trim(),
             firstName: firstName.trim(), 
             lastName: lastName.trim(),
             passHash,
-            role: role || 'user'  // Default to 'user' if not specified
         });
 
         const userResponse = {
@@ -161,7 +153,7 @@ router.put('/update/:id', authenticate, async (req, res) => {
                 });
             }
             
-            updateData.passHash = await bcrypt.hash(password, saltRounds);
+            updateData.passHash = await bcrypt.hash(password, SALT_ROUNDS);
         }
         
         if (firstName) {
@@ -247,6 +239,126 @@ router.delete('/delete/:id', authenticate, authorize(['admin']), async (req, res
     } catch(err){
         console.error(`Error deleting user of id ${req.params.id}: ${err}`);
 
+        res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+});
+
+// login endpoint for users
+router.post('/login', async (req, res) => {
+    try{
+        const { email, password } = req.body;
+        
+        const user = await Users.findOne({
+            where: {
+                email
+            }
+        });
+
+        try{
+            if (!user){
+                return res.status(401).json({
+                    error: "Invalid credentials"
+                });
+            }
+
+            const isMatch = await bcrypt.compare(password, user.passHash);
+            if (!isMatch){
+                return res.status(401).json({
+                    error: "Invalid credentials"
+                });
+            }
+
+            const token = generateAccessToken(user);
+            const refreshToken = generateRefreshToken(user);
+
+            await Users.update({refreshToken}, {
+                where: {
+                    id: user.id
+                }
+            });
+
+            res.status(200).json({
+                message: "Logged in successfully",
+                token,
+                userId: user.id,
+                role: user.role
+            });
+
+        }catch(err){
+            console.error(`Error whilst logging in: ${err}`);
+            return res.status(403).json({
+                error: "Login failed"
+            });
+        }
+    } catch(err){
+        console.error(`Error whilst logging in: ${err}`);
+        res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+});
+
+// endpoint to refresh access token
+router.post('/refresh', async (req, res) => {
+    try{
+        const { token } = req.body;
+
+        if (!token){
+            return res.send(401).json({
+                error: "Access denied. Valid token parameter is required"
+            });
+        }
+
+        const user = await Users.findOne({
+            where: {
+                refreshToken: token
+            }
+        });
+
+        if (!user){
+            return res.status(403).json({
+                error: "Access denied. You are only authorized to refresh your own token"
+            });
+        }
+
+        if (user.refreshToken !== token){
+            return res.status(403).json({
+                error: "Access denied: failed to refresh access token"
+            });
+        }
+
+        const accessToken = generateAccessToken(user);
+
+        res.status(200).json({
+            message: "Token refreshed successfully",
+            accessToken,
+            userId: user.id,
+            role: user.role
+        });
+
+    } catch(err){
+        console.error(`Error whilst refreshing access token: ${err}`);
+        res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+});
+
+// logout endpoint that removes refresh token from db
+router.post('/logout', authenticate, async (req, res) => {
+    try{
+        await Users.update({
+            refreshToken: null
+        },{
+            where: {
+                id: req.user.id
+            }
+        });
+        res.status(204).send();
+    } catch(err){
+        console.error(`Error whilst logging out: ${err}`);
         res.status(500).json({
             error: "Internal server error"
         });
