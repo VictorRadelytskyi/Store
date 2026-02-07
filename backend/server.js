@@ -1,4 +1,5 @@
 import express from 'express';
+import axios from 'axios';
 import Orders from './orders/ordersApi.js';
 import Products from './products/productsApi.js';
 import Users from './users/usersApi.js';
@@ -21,6 +22,44 @@ app.use('/api/products', Products);
 app.use('/api/users', Users);
 app.use('/api/comments', Comments);
 
+app.post('/checkout', async (req, res) => {
+    try{
+        const { items, userId } = req.body;
+
+        if (!userId || !items) {
+            return res.status(400).json({
+                error: "userId and items are required for checkout"
+            });
+        }
+
+        const response = await axios.post('http://localhost:5000/api/orders/create', {
+            userId,
+            items
+        }, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        res.status(201).json({
+            message: "Checkout completed successfully",
+            order: response.data.order
+        });
+
+    } catch (err){
+        console.error(`Checkout error: ${err}`);
+        
+        // If it's an axios error, pass through the response
+        if (err.response) {
+            return res.status(err.response.status).json(err.response.data);
+        }
+        
+        return res.status(500).json({
+            error: "Checkout failed"
+        });
+    }
+});
+
 // Global error handling middleware
 app.use((err, req, res, next) => {
     console.error('Global error:', err);
@@ -39,16 +78,15 @@ app.listen(5000, async (err) => {
     }
     
     try {
-        // Sync all databases
         await UsersModel.sequelize.sync();
         await ProductsModel.sequelize.sync();
         await OrdersModel.sequelize.sync();
         await CommentsModel.sequelize.sync();
-        console.log('✅ All databases synced successfully');
+        console.log('All databases synced successfully');
     } catch (error) {
-        console.error('❌ Database sync failed:', error);
+        console.error('Database sync failed:', error);
         return;
     }
     
-    console.log("🚀 Server started on port 5000");
+    console.log("Server started on port 5000");
 });
