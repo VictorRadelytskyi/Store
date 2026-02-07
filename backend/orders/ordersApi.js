@@ -121,10 +121,9 @@ router.patch('/change_status/:id', async (req, res) => {
             });
         }
 
-        const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-        if (!validStatuses.includes(status)){
+        if (status !== "pending" || status !== "delivered" || status !== "cancelled"){
             return res.status(400).json({
-                error: "Invalid status parameter. Status should be one of: pending, processing, shipped, delivered, cancelled"
+                error: "Invalid status parameter. Status should be either pending, delivered, or cancelled"
             });
         }
 

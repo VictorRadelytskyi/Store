@@ -12,23 +12,6 @@ const Orders = sequelize.define('Orders', {
         primaryKey: true
     },
 
-    productId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: 'products',
-            key: 'id'
-        }
-    },
-
-    quantity: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        validate: {
-            min: 1
-        }
-    },
-
     userId: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -42,6 +25,17 @@ const Orders = sequelize.define('Orders', {
         type: DataTypes.ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled'),
         defaultValue: 'pending',
         allowNull: false
+    },
+
+    items: {
+        type: DataTypes.TEXT,
+        get(){
+            const rawValue = this.getDataValue('items');
+            return rawValue ? JSON.parse(rawValue) : []
+        },
+        set(value){
+            this.setDataValue('items', JSON.stringify(value));
+        }
     },
     
     totalPrice: {
