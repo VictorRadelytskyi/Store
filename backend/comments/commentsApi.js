@@ -2,6 +2,7 @@ import Comments from './comments.js';
 import Products from '../products/products.js';
 import Users from '../users/users.js';
 import { Router } from 'express';
+import authenticate from '../middleware/authenticate.js';
 
 const router = Router();
 
@@ -32,7 +33,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // post a comment under some product
-router.post('/:id', async (req, res) => {
+router.post('/:id', authenticate, async (req, res) => {
     try{
         const product = await Products.findByPk(req.params.id);
         
@@ -85,8 +86,21 @@ router.post('/:id', async (req, res) => {
 });
 
 // endpoint to delete a comment 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticate, async (req, res) => {
     try{
+        const comment = await Comments.findByPk(req.params.id);
+        if (!comment){
+            return res.status(404).json({
+                error: `Comment of id ${req.params.id} not found`
+            });
+        }
+
+        if (req.user.id !== comment.userId && req.user.role !== 'admin'){
+            return res.status.json({
+                error: 'Access denied, you can not delete a comment of other user unless you have admin role'
+            });
+        }
+
         const deletedCount = await Comments.destroy({where: {id: req.params.id}});
 
         if (deletedCount === 0){

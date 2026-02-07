@@ -2,10 +2,13 @@ import {Router} from 'express';
 import Orders from './orders.js';
 import Products from '../products/products.js';
 import Users from '../users/users.js';
+import authenticate from '../middleware/authenticate.js';
+import authorize from '../middleware/authorize.js';
 
 const router = Router();
 
-router.get('/', async (req, res) => {
+// admin endpoint to get all orders
+router.get('/', authenticate, authorize(['admin']), async (req, res) => {
     try{
         const orders = await Orders.findAll();
         return res.status(200).json(orders);
@@ -15,12 +18,19 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/:id', async (req, res) =>{
+// user-specific endpoint to get user's order
+router.get('/:id', authenticate, async (req, res) =>{
     try{
         const order = await Orders.findByPk(req.params.id);
         if (!order){
             return res.status(404).json({
                 error: `Order of id ${req.params.id} not found`
+            });
+        }
+
+        if (order.userId !== req.user.id && req.user.role !== 'admin'){
+            return res.status(403).json({
+                error: "Access denied. You can not view other user's orders unless you have admin role"
             });
         }
 
@@ -35,9 +45,26 @@ router.get('/:id', async (req, res) =>{
     }
 });
 
-router.get('/user_orders/:id', async (req, res) => {
+// user-specific endpoint to get all user's orders
+router.get('/user_orders/:id', authenticate, async (req, res) => {
     try{
         const user = await Users.findByPk(req.params.id);
+        if (req.user.role !== 'admin'){
+            if (!user){
+                // if user doesn't exist, it can't be an authenticated user, so return 403 to prevent enumeration
+                return res.status(403).json({
+                    error: "Access denied. You can not view other user's orders unless you have admin role"
+                });
+            }
+            
+            // separate condition check for null-safety
+            if (user.id !== req.user.id){
+                return res.status(403).json({
+                    error: "Access denied. You can not view other user's orders unless you have admin role"
+                });
+            }
+        }
+
         if (!user){
             return res.status(404).json({
                 error: `User of id ${req.params.id} not found`
@@ -59,7 +86,9 @@ router.get('/user_orders/:id', async (req, res) => {
     }
 });
 
-router.post('/create', async (req, res) => {
+
+// endpoint to create order for a normal user
+router.post('/create', authenticate, async (req, res) => {
     try{
         const { userId, items } = req.body;
 
@@ -79,8 +108,21 @@ router.post('/create', async (req, res) => {
         // Check if user exists
         const foundUser = await Users.findByPk(userId);
         if (!foundUser){
-            return res.status(404).json({
-                error: `User of id ${userId} not found`
+            // return 403 instead of 404 for normal users to prevent enumeration
+            if (req.user.role !== 'admin'){
+                return res.status(403).json({
+                    error: "Access denied. You can not create an order for other user unless you have admin role"
+                });
+            } else{
+                return res.status(404).json({
+                    error: `User of id ${userId} not found`
+                });
+            }
+        }
+
+        if (userId !== req.user.role && req.user.role !== 'admin'){
+            return res.status(403).json({
+                error: "Access denied. You can not create an order for other user unless you have admin role"
             });
         }
 
@@ -131,7 +173,8 @@ router.post('/create', async (req, res) => {
     }
 });
 
-router.patch('/change_status/:id', async (req, res) => {
+// admin endpoint to change status of an order
+router.patch('/change_status/:id', authenticate, authorize(['admin']), async (req, res) => {
     try{
         const { status } = req.body;
         if (!status){
@@ -140,10 +183,10 @@ router.patch('/change_status/:id', async (req, res) => {
             });
         }
 
-        const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+        const validStatuses = ['pending', 'delivered', 'cancelled'];
         if (!validStatuses.includes(status)){
             return res.status(400).json({
-                error: "Invalid status parameter. Status should be one of: pending, processing, shipped, delivered, cancelled"
+                error: "Invalid status parameter. Status should be one of: pending, delivered, cancelled"
             });
         }
 
@@ -179,7 +222,5 @@ router.patch('/change_status/:id', async (req, res) => {
         });
     }
 });
-
-
 
 export default router;

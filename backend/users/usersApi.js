@@ -2,12 +2,14 @@ import { Router } from 'express';
 import bcrypt from 'bcrypt';
 import { Op } from 'sequelize';
 import Users from './users.js';
+import authenticate from '../middleware/authenticate.js';
+import authorize from '../middleware/authorize.js';
 const router = Router();
 
 const saltRounds = process.env.saltRounds || 12;
 
-router.get('/', async (req, res) => {
-    // TODO: implement authorization
+// admin-only endpoint to get all users
+router.get('/', authenticate, authorize(['admin']), async (req, res) => {
     try{ 
         const users = await Users.findAll({
             attributes: {exclude: ["passHash"]}
@@ -19,7 +21,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/create', async (req, res) => {
+// admin-only endpoint to create a user
+router.post('/create', authenticate, authorize(['admin']), async (req, res) => {
     try{
         const { email, password, firstName, lastName, role } = req.body;
         
@@ -102,13 +105,28 @@ router.post('/create', async (req, res) => {
     }
 });
 
-router.put('/update/:id', async (req, res) => {
+// endpoint (protected from privelege-escalation!) to update user data
+router.put('/update/:id', authenticate, async (req, res) => {
     try {
         const user = await Users.findByPk(req.params.id);
-        
+
         if (!user) {
-            return res.status(404).json({
-                error: `No user with id: ${req.params.id} found`
+            // return 403 in case it's not admin to prevent user enumeration
+            if (req.user.role !== 'admin'){
+                return res.status(403).json({
+                    error: "Access denied. You can only update your own data unless you have admin role"
+                });
+            } else{
+                return res.status(404).json({
+                    error: `No user with id: ${req.params.id} found`
+                });
+            }
+        }
+
+        // check if the user wants to update his own data
+        if (user.id !== req.user.id && req.user.role !== 'admin'){
+            return res.status(403).json({
+                error: "Access denied. You can only update your own data unless you have admin role"
             });
         }
 
@@ -155,6 +173,12 @@ router.put('/update/:id', async (req, res) => {
         }
         
         if (role) {
+            // prevent privelege escalation
+            if (req.user.role !== 'admin'){
+                return res.status(403).json({
+                    error: "Access denied. Only admin can change your role to admin"
+                });
+            }
             const validRoles = ['user', 'admin'];
             if (!validRoles.includes(role)) {
                 return res.status(400).json({
@@ -206,7 +230,8 @@ router.put('/update/:id', async (req, res) => {
     }
 });
 
-router.delete('/delete/:id', async (req, res) => {
+// admin-only endpoint to delete a user
+router.delete('/delete/:id', authenticate, authorize(['admin']), async (req, res) => {
     try{
         const deletedCount = await Users.destroy({ where: { id: req.params.id } });
         if (deletedCount === 0) {

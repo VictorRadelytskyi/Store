@@ -1,8 +1,11 @@
 import {Router} from 'express';
 import Products from './products.js';
+import authenticate from '../middleware/authenticate.js';
+import authorize from '../middleware/authorize.js';
 
 const router = Router();
 
+// endpoint to get all products TODO: implement searching
 router.get('/', async (req, res) => {
     try{
         const products = await Products.findAll();
@@ -13,6 +16,7 @@ router.get('/', async (req, res) => {
     }
 });
 
+// endpoint to get specific product
 router.get('/:id', async (req, res) => {
     try{
         const product = await Products.findByPk(req.params.id);
@@ -36,8 +40,8 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-
-router.post('/create', async (req, res) => {
+// admin-only endpoint to create product
+router.post('/create', authenticate, authorize(['admin']), async (req, res) => {
     try{
         const { name, description, price, available } = req.body;
         if (!name || !description || price === undefined || available === undefined){
@@ -90,7 +94,8 @@ router.post('/create', async (req, res) => {
     }
 });
 
-router.delete('/delete/:id', async (req, res) => {
+// admin-only endpoint to delete product
+router.delete('/delete/:id', authenticate, authorize(['admin']), async (req, res) => {
     try{
         const product = await Products.findByPk(req.params.id);
         
