@@ -2,7 +2,8 @@ import {Sequelize, DataTypes} from 'sequelize';
 
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: './comments.sqlite'
+    storage: './estore.sqlite',  // Shared database
+    logging: false
 });
 
 const Comments = sequelize.define('Comments', {
@@ -27,7 +28,8 @@ const Comments = sequelize.define('Comments', {
         references: {
             model: 'users',
             key: 'id'
-        }
+        },
+        onDelete: 'CASCADE'
     },
 
     productId: {
@@ -36,11 +38,23 @@ const Comments = sequelize.define('Comments', {
         references: {
             model: 'products',
             key: 'id'
-        }
+        },
+        onDelete: 'CASCADE'
     }
 }, {
     timestamps: true,
-    tableName:'comments'
+    tableName:'comments',
+    indexes: [
+        {
+            fields: ['productId']
+        },
+        {
+            fields: ['userId']
+        },
+        {
+            fields: ['productId', 'userId']  // Composite index
+        }
+    ]
 });
 
 export default Comments;

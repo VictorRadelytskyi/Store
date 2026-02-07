@@ -120,12 +120,25 @@ router.post('/create', authenticate, async (req, res) => {
             }
         }
 
-        // Critical security check: prevent users from creating orders for other users
         if (userId !== req.user.id && req.user.role !== 'admin'){
             return res.status(403).json({
                 error: "Access denied. You can not create an order for other user unless you have admin role"
             });
         }
+
+        // Extract all product IDs and validate them in a single query to prevent N+1 problem
+        const productIds = items.map(item => item.productId);
+        const products = await Products.findAll({
+            where: {
+                id: productIds
+            }
+        });
+        
+        // Create a map for O(1) product lookups
+        const productMap = products.reduce((map, product) => {
+            map[product.id] = product;
+            return map;
+        }, {});
 
         // Validate items and calculate total price
         let totalPrice = 0;
@@ -144,10 +157,17 @@ router.post('/create', authenticate, async (req, res) => {
                 });
             }
 
-            const product = await Products.findByPk(productId);
+            const product = productMap[productId];
             if (!product){
                 return res.status(404).json({
                     error: `Product of id ${productId} not found`
+                });
+            }
+
+            // Check availability
+            if (product.available < quantity) {
+                return res.status(400).json({
+                    error: `Insufficient stock for product ${product.name}. Available: ${product.available}, Requested: ${quantity}`
                 });
             }
 

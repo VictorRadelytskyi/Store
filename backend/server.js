@@ -75,8 +75,8 @@ app.use('*', (req, res) => {
 
 app.listen(5000, async (err) => {
     if (err){
-        console.log(`can not start server: ${err}`);
-        return;
+        console.error(`Cannot start server: ${err}`);
+        process.exit(1);
     }
     
     try {
@@ -87,7 +87,7 @@ app.listen(5000, async (err) => {
         console.log('All databases synced successfully');
     } catch (error) {
         console.error('Database sync failed:', error);
-        return;
+        process.exit(1);
     }
     
     console.log("Server started on port 5000");

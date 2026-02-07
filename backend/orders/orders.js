@@ -18,7 +18,8 @@ const Orders = sequelize.define('Orders', {
         references: {
             model: 'users',
             key: 'id'
-        }
+        },
+        onDelete: 'CASCADE'
     },
 
     status: {
