@@ -120,7 +120,8 @@ router.post('/create', authenticate, async (req, res) => {
             }
         }
 
-        if (userId !== req.user.role && req.user.role !== 'admin'){
+        // Critical security check: prevent users from creating orders for other users
+        if (userId !== req.user.id && req.user.role !== 'admin'){
             return res.status(403).json({
                 error: "Access denied. You can not create an order for other user unless you have admin role"
             });

@@ -4,6 +4,7 @@ import Orders from './orders/ordersApi.js';
 import Products from './products/productsApi.js';
 import Users from './users/usersApi.js';
 import Comments from './comments/commentsApi.js';
+import authenticate from './middleware/authenticate.js';
 
 // Import models for database sync
 import UsersModel from './users/users.js';
@@ -22,13 +23,14 @@ app.use('/api/products', Products);
 app.use('/api/users', Users);
 app.use('/api/comments', Comments);
 
-app.post('/checkout', async (req, res) => {
+app.post('/checkout', authenticate, async (req, res) => {
     try{
-        const { items, userId } = req.body;
+        const { items } = req.body;
+        const userId = req.user.id; 
 
-        if (!userId || !items) {
+        if (!items) {
             return res.status(400).json({
-                error: "userId and items are required for checkout"
+                error: "items are required for checkout"
             });
         }
 

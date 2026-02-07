@@ -87,7 +87,7 @@ router.post('/create', authenticate, authorize(['admin']), async (req, res) => {
         });
 
     }catch(err){
-        console.error(`Error creating product of id ${req.params.id}: ${err}`);
+        console.error(`Error creating product: ${err}`);
         res.status(500).json({
             error: "Internal server error"
         });

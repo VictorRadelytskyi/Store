@@ -5,7 +5,7 @@ import bcrypt from 'bcrypt';
 
 const ADMIN_PASS = process.env.ADMIN_PASS || "Admin_pass";
 const VICTOR_PASS = process.env.VICTOR_PASS || "Victor_pass";
-const SALT_ROUNDS = process.env.SALT_ROUNDS || 12
+const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS) || 12;
 
 export async function seedProducts(){
     try {
@@ -15,7 +15,7 @@ export async function seedProducts(){
             name: p.title,
             description: p.description,
             price: p.price,
-            available: process.env.DEFAULT_PRODUCTS_AVAILABLE || 10,
+            available: parseInt(process.env.DEFAULT_PRODUCTS_AVAILABLE) || 10,
             img_path: p.image
         }));
 

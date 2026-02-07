@@ -43,19 +43,12 @@ router.post('/:id', authenticate, async (req, res) => {
             });
         }
 
-        const { body, userId } = req.body;
+        const { body } = req.body;
+        const userId = req.user.id; // Use authenticated user ID
 
-        if (!body || !userId){
+        if (!body){
             return res.status(400).json({
-                error: "body and userId parameters should be provided"
-            });
-        }
-
-        const user = await Users.findByPk(userId);
-        
-        if (!user){
-            return res.status(404).json({
-                error: `Failed to create comment, because user of provided userId ${userId} is not found`
+                error: "body parameter should be provided"
             });
         }
 
@@ -96,7 +89,7 @@ router.delete('/:id', authenticate, async (req, res) => {
         }
 
         if (req.user.id !== comment.userId && req.user.role !== 'admin'){
-            return res.status.json({
+            return res.status(403).json({
                 error: 'Access denied, you can not delete a comment of other user unless you have admin role'
             });
         }

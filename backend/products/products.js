@@ -17,7 +17,7 @@ const Products = sequelize.define('Products', {
         allowNull: false,
         validate: {
             notEmpty: true,
-            len: [5, 150]
+            len: [3, 150]  
         }
     },
 
@@ -26,7 +26,7 @@ const Products = sequelize.define('Products', {
         allowNull: false,
         validate: {
             notEmpty: true,
-            len: [10, 2500]
+            len: [5, 2500]
         }
     },
 
