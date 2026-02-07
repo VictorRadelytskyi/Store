@@ -55,12 +55,13 @@ const Users = sequelize.define('Users', {
         type: DataTypes.ENUM('user', 'admin'),
         allowNull: false,
         defaultValue: 'user'
+    },
+
+    refreshToken: {
+        type: DataTypes.TEXT,
+        allowNull: true
     }
 
-    // orders: {
-    //     type: DataTypes.ARRAY,
-    //     allowNull: true
-    // }
 }, {
     tableName: "users",
     timestamps: true
