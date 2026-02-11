@@ -90,39 +90,12 @@ router.get('/user_orders/:id', authenticate, async (req, res) => {
 // endpoint to create order for a normal user
 router.post('/create', authenticate, async (req, res) => {
     try{
-        const { userId, items } = req.body;
-
-        // Validate required parameters
-        if (!userId) {
-            return res.status(400).json({
-                error: "userId parameter is required"
-            });
-        }
+        const { items } = req.body;
+        const userId = req.user.id; // Use authenticated user's ID
 
         if (!items || !Array.isArray(items) || items.length === 0){
             return res.status(400).json({
                 error: "items parameter should contain a non-empty list of objects"
-            });
-        }
-
-        // Check if user exists
-        const foundUser = await Users.findByPk(userId);
-        if (!foundUser){
-            // return 403 instead of 404 for normal users to prevent enumeration
-            if (req.user.role !== 'admin'){
-                return res.status(403).json({
-                    error: "Access denied. You can not create an order for other user unless you have admin role"
-                });
-            } else{
-                return res.status(404).json({
-                    error: `User of id ${userId} not found`
-                });
-            }
-        }
-
-        if (userId !== req.user.id && req.user.role !== 'admin'){
-            return res.status(403).json({
-                error: "Access denied. You can not create an order for other user unless you have admin role"
             });
         }
 

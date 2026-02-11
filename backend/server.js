@@ -11,6 +11,12 @@ import UsersModel from './users/users.js';
 import ProductsModel from './products/products.js';
 import OrdersModel from './orders/orders.js';
 import CommentsModel from './comments/comments.js';
+import {seedProducts, seedUsers} from './seed.js';
+
+if (process.argv[2] === "--with-seed"){
+    seedProducts();
+    seedUsers();
+}
 
 const app = express();
 
@@ -39,7 +45,8 @@ app.post('/checkout', authenticate, async (req, res) => {
             items
         }, {
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `${req.headers.authorization}`
             }
         });
 

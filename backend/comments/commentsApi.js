@@ -1,6 +1,5 @@
 import Comments from './comments.js';
 import Products from '../products/products.js';
-import Users from '../users/users.js';
 import { Router } from 'express';
 import authenticate from '../middleware/authenticate.js';
 

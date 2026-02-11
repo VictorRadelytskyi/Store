@@ -2,8 +2,16 @@ import Products from './products/products.js';
 import Users from './users/users.js';
 import {generateRefreshToken} from './middleware/tokenService.js';
 import bcrypt from 'bcrypt';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const ADMIN_PASS = process.env.ADMIN_PASS || "Admin_pass";
+console.log(`ADMIN_PASS: ${ADMIN_PASS}`);
 const VICTOR_PASS = process.env.VICTOR_PASS || "Victor_pass";
 const SALT_ROUNDS = parseInt(process.env.SALT_ROUNDS) || 12;
 

@@ -5,9 +5,18 @@ import Users from './users.js';
 import authenticate from '../middleware/authenticate.js';
 import authorize from '../middleware/authorize.js';
 import {generateRefreshToken, generateAccessToken} from '../middleware/tokenService.js';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
 const router = Router();
 
-const SALT_ROUNDS = process.env.SALT_ROUNDS || 12;
+
+const SALT_ROUNDS = parseFloat(process.env.SALT_ROUNDS) || 12;
 
 // admin-only endpoint to get all users
 router.get('/', authenticate, authorize(['admin']), async (req, res) => {
@@ -282,13 +291,14 @@ router.post('/login', async (req, res) => {
             res.status(200).json({
                 message: "Logged in successfully",
                 token,
+                refreshToken,
                 userId: user.id,
                 role: user.role
             });
 
         }catch(err){
             console.error(`Error whilst logging in: ${err}`);
-            return res.status(403).json({
+            return res.status(401).json({
                 error: "Login failed"
             });
         }
@@ -306,7 +316,7 @@ router.post('/refresh', async (req, res) => {
         const { token } = req.body;
 
         if (!token){
-            return res.send(401).json({
+            return res.status(401).json({
                 error: "Access denied. Valid token parameter is required"
             });
         }
@@ -340,8 +350,8 @@ router.post('/refresh', async (req, res) => {
 
     } catch(err){
         console.error(`Error whilst refreshing access token: ${err}`);
-        res.status(500).json({
-            error: "Internal server error"
+        res.status(403).json({
+            error: "Refresh token expired"
         });
     }
 });

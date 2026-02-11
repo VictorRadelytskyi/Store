@@ -1,8 +1,16 @@
 import {Sequelize, DataTypes} from 'sequelize';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const dbPath = path.join(__dirname, '..', 'estore.sqlite');
+
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: './estore.sqlite',  // Shared database
+    storage: dbPath,
     logging: false
 });
 
