@@ -19,14 +19,14 @@ export default function Menu(){
             items = [
                 { label: 'Home', path: '/' },
                 { label: 'Cart', path: '/cart' },
-                { label: 'Orders', path: '/Orders' },
+                { label: 'Orders', path: '/orders' },
                 { label: 'Logout', path: '/logout' }
             ];
         } else {
             items = [
                 { label: 'Home', path: '/' },
                 { label: 'Cart', path: '/cart' },
-                { label: 'Orders', path: '/Orders' },
+                { label: 'Orders', path: '/orders' },
                 { label: 'Log In', path: '/login' }
             ];
         }

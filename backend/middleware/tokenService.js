@@ -17,7 +17,9 @@ export function generateAccessToken(user){
     return jwt.sign(
         {
             id: user.id,
-            role: user.role
+            role: user.role,
+            firstName: user.firstName,
+            lastName: user.lastName
         }, 
         JWT_SECRET,
         {

@@ -22,7 +22,14 @@ export default function Login(){
                 password
             });
 
-            login(response.data.accessToken, response.data.refreshToken, response.data.userId, response.data.role);
+            login(
+                response.data.accessToken, 
+                response.data.refreshToken, 
+                response.data.userId, 
+                response.data.role,
+                response.data.firstName,
+                response.data.lastName
+            );
             navigate('/');
         }catch(err){
             if (axios.isAxiosError(err)){

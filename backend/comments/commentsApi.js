@@ -1,5 +1,6 @@
 import Comments from './comments.js';
 import Products from '../products/products.js';
+import Users from '../users/users.js';
 import { Router } from 'express';
 import authenticate from '../middleware/authenticate.js';
 
@@ -18,9 +19,42 @@ router.get('/:id', async (req, res) => {
 
         const comments = await Comments.findAll({where: {productId: req.params.id}});
         
+        // Fetch user names for comments that don't have them stored
+        const commentsWithNames = await Promise.all(comments.map(async (comment) => {
+            let firstName = comment.userFirstName;
+            let lastName = comment.userLastName;
+            
+            // If names are missing, fetch from Users table
+            if (!firstName || !lastName) {
+                const user = await Users.findByPk(comment.userId, {
+                    attributes: ['firstName', 'lastName']
+                });
+                firstName = user?.firstName || 'Unknown';
+                lastName = user?.lastName || 'User';
+            }
+            
+            return {
+                id: comment.id,
+                body: comment.body,
+                userId: comment.userId,
+                productId: comment.productId,
+                createdAt: comment.createdAt,
+                updatedAt: comment.updatedAt,
+                userFirstName: firstName,
+                userLastName: lastName
+            };
+        }));
+        
+        console.log('Comments with names:', commentsWithNames?.map(c => ({
+            id: c.id,
+            userFirstName: c.userFirstName,
+            userLastName: c.userLastName,
+            userId: c.userId
+        })));
+        
         res.status(200).json({
             message: "Retrieved comments successfully",
-            comments
+            comments: commentsWithNames
         })
     }catch(err){
         console.error(`Error getting comments under product of id ${req.params.id}: ${err}`);
@@ -57,9 +91,22 @@ router.post('/:id', authenticate, async (req, res) => {
             });
         }
 
+        // Get the actual user data from database to prevent name spoofing
+        const user = await Users.findByPk(userId, {
+            attributes: ['firstName', 'lastName']
+        });
+
+        if (!user) {
+            return res.status(404).json({
+                error: "User not found"
+            });
+        }
+
         const comment = await Comments.create({
             body: body.trim(), 
             userId, 
+            userFirstName: user.firstName, // Use database values, not JWT
+            userLastName: user.lastName,   // Use database values, not JWT
             productId: req.params.id
         });
 

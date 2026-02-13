@@ -4,6 +4,7 @@ import { Card, Form, Alert, Button, Container } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import CommentSection from '../comments/CommentSection';
 
 interface ProductData {
     id: number;
@@ -87,8 +88,7 @@ export default function Product(){
                 }
                 
                 localStorage.setItem(`${user.id}_cart`, JSON.stringify(existingCart));
-                setSuccess("Added product to the card");
-                setTimeout(() => navigate("/"), 2000);
+                setSuccess("Added product to the cart");
             } catch (error) {
                 setError('Failed to add item to cart');
                 console.error('localStorage error:', error);
@@ -148,19 +148,25 @@ export default function Product(){
                         <Form>
                             <Form.Group className="mb-4">
                                 <Form.Label className="fw-semibold mb-3">Quantity</Form.Label>
-                                <div className="row g-3">
-                                    <div className="col-6">
-                                        <Form.Control
-                                            type="number"
-                                            value={selected}
-                                            onChange={e => setSelected(parseInt(e.target.value) || 1)}
-                                            min={1}
-                                            max={product.available || 10}
-                                            required
-                                            className="h-100"
-                                        />
+                                <div className="row d-flex flex-row justify-content-center">
+                                    <div className="col-2 d-flex justify-content-center align-items-center">
+                                        <Button 
+                                            variant="outline-secondary" 
+                                            size="lg"
+                                            onClick={() => setSelected(prev => prev - 1)}
+                                        >
+                                            -
+                                        </Button>
+                                        <span className="mx-2">{selected}</span>
+                                        <Button 
+                                            variant="outline-secondary" 
+                                            size="lg"
+                                            onClick={() => setSelected(prev => prev + 1)}
+                                        >
+                                            +
+                                        </Button>
                                     </div>
-                                    <div className="col-6">
+                                    <div className="col-10">
                                         <Button 
                                             onClick={addToCart}
                                             disabled={!user || !product.available}
@@ -184,6 +190,7 @@ export default function Product(){
                     </div>
                 </Card.Body>
             </Card>
+            <CommentSection productId={product.id} />
         </Container>
     );
 }

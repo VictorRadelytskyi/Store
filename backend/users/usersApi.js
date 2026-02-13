@@ -55,6 +55,20 @@ router.post('/register', async (req, res) => {
             });
         }
 
+        // Validate firstName and lastName contain only alphanumeric characters
+        const alphanumericRegex = /^[a-zA-Z]+$/;
+        if (!alphanumericRegex.test(firstName.trim())) {
+            return res.status(400).json({
+                error: 'First name should contain only alphanumeric characters'
+            });
+        }
+
+        if (!alphanumericRegex.test(lastName.trim())) {
+            return res.status(400).json({
+                error: 'Last name should contain only alphanumeric characters'
+            });
+        }
+
         const existingUser = await Users.findOne({where: {email}});
         if (existingUser){
             return res.status(400).json({

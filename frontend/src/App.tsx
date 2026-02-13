@@ -5,6 +5,8 @@ import {AuthProvider} from './components/context/AuthContext';
 import Register from './components/Register';
 import Home from './components/Home';
 import Menu from './components/Menu.tsx';
+import Cart from './components/Cart/Cart.tsx';
+import Orders from './components/Orders/Orders.tsx';
 import Product from './components/products/Product';
 import Logout from './components/login/Logout.tsx';
 
@@ -15,6 +17,8 @@ function App() {
           <Menu />
           <Routes>
             <Route path="/" element={<Home/>} />
+            <Route path="/cart" element={<Cart/>} />
+            <Route path="/orders" element={<Orders/>} />
             <Route path="/login" element={<Login/>} />
             <Route path="/logout" element={<Logout/>} />
             <Route path="/register" element={<Register/>} />

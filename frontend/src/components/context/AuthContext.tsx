@@ -2,13 +2,15 @@ import React, { createContext, useState, useContext } from 'react';
 
 interface User{
     id: number,
-    role:  'admin' | 'user'
+    role:  'admin' | 'user',
+    firstName: string;
+    lastName: string;
 };
 
 interface AuthContextType{
     user: User | null,
     token: string | null,
-    login: (accessToken: string, refreshToken: string, userId: number, role: 'user' | 'admin') => void,
+    login: (accessToken: string, refreshToken: string, userId: number, role: 'user' | 'admin', firstName: string, lastName: string) => void,
     logout: () => void
 };
 
@@ -18,8 +20,16 @@ export function AuthProvider({children}: {children: React.ReactNode}): React.Rea
     const [user, setUser] = useState<User | null>(() => {
         const userId = localStorage.getItem("userId");
         const role = localStorage.getItem("role") as 'user' | 'admin';
-        if (userId && role) {
-            return {id: parseInt(userId), role};
+        const firstName = localStorage.getItem("firstName");
+        const lastName = localStorage.getItem("lastName");
+        
+        if (userId && role && firstName && lastName) {
+            return {
+                id: parseInt(userId), 
+                role,
+                firstName,
+                lastName
+            };
         }
         return null;
     });
@@ -28,14 +38,21 @@ export function AuthProvider({children}: {children: React.ReactNode}): React.Rea
         return localStorage.getItem("accessToken");
     });
     
-    function login(accessToken: string, refreshToken: string, userId: number, role: 'user' | 'admin'){
+    function login(accessToken: string, refreshToken: string, userId: number, role: 'user' | 'admin', firstName: string, lastName: string){
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
         localStorage.setItem("userId", userId.toString());
         localStorage.setItem("role", role);
+        localStorage.setItem("firstName", firstName);
+        localStorage.setItem("lastName", lastName);
 
         setToken(accessToken);
-        setUser({id: userId, role});
+        setUser({
+            id: userId, 
+            role,
+            firstName,
+            lastName
+        });
     }
 
     function logout(){
@@ -43,6 +60,8 @@ export function AuthProvider({children}: {children: React.ReactNode}): React.Rea
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("userId");
         localStorage.removeItem("role");
+        localStorage.removeItem("firstName");
+        localStorage.removeItem("lastName");
         
         setToken(null);
         setUser(null);

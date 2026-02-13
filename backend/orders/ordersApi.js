@@ -147,6 +147,17 @@ router.post('/create', authenticate, async (req, res) => {
             totalPrice += parseFloat(product.price) * quantity;
         }
 
+        // Update product availability (subtract ordered quantities)
+        for (const item of items) {
+            const { productId, quantity } = item;
+            const product = productMap[productId];
+            
+            await Products.update(
+                { available: product.available - quantity },
+                { where: { id: productId } }
+            );
+        }
+
         const createdOrder = await Orders.create({
             userId, 
             items,
@@ -211,6 +222,75 @@ router.patch('/change_status/:id', authenticate, authorize(['admin']), async (re
         
     }catch(err){
         console.error(`Error changing status of order of id ${req.params.id}: ${err}`);
+        res.status(500).json({
+            error: "Internal server error"
+        });
+    }
+});
+
+// user endpoint to cancel their own order
+router.patch('/cancel/:id', authenticate, async (req, res) => {
+    try{
+        const order = await Orders.findByPk(req.params.id);
+        if (!order){
+            return res.status(404).json({
+                error: `Order of id ${req.params.id} not found`
+            });
+        }
+
+        // Check if user owns this order
+        if (order.userId !== req.user.id && req.user.role !== 'admin'){
+            return res.status(403).json({
+                error: "Access denied. You can only cancel your own orders"
+            });
+        }
+
+        // Check if order can be cancelled
+        if (order.status === 'cancelled'){
+            return res.status(400).json({
+                error: "Order is already cancelled"
+            });
+        }
+
+        if (order.status === 'delivered'){
+            return res.status(400).json({
+                error: "Cannot cancel a delivered order"
+            });
+        }
+
+        // Restore product availability when cancelling order
+        const items = order.items;
+        for (const item of items) {
+            const { productId, quantity } = item;
+            
+            // Get current product to add back the quantity
+            const product = await Products.findByPk(productId);
+            if (product) {
+                await Products.update(
+                    { available: product.available + quantity },
+                    { where: { id: productId } }
+                );
+            }
+        }
+
+        // Update order status to cancelled
+        const updatedCount = await Orders.update(
+            { status: 'cancelled' }, 
+            { where: { id: req.params.id } }
+        );
+        
+        if (updatedCount[0] === 0){
+            return res.status(500).json({
+                error: `Error cancelling order of id ${req.params.id}`
+            });
+        }
+        
+        res.status(200).json({
+            message: "Order cancelled successfully"
+        });
+        
+    }catch(err){
+        console.error(`Error cancelling order of id ${req.params.id}: ${err}`);
         res.status(500).json({
             error: "Internal server error"
         });
