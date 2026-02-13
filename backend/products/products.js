@@ -55,10 +55,19 @@ const Products = sequelize.define('Products', {
         }
     },
 
-    img_path: {
+    imgPath: {
         type: DataTypes.STRING(250),
         allowNull: false,
         defaultValue: "../../frontend/public/no-img.png"
+    },
+
+    category: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        validate: {
+            notEmpty: true,
+            len: [3, 100]
+        }
     }
 }, {
     tableName: 'products',

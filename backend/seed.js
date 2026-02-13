@@ -24,7 +24,8 @@ export async function seedProducts(){
             description: p.description,
             price: p.price,
             available: parseInt(process.env.DEFAULT_PRODUCTS_AVAILABLE) || 10,
-            img_path: p.image
+            imgPath: p.image,
+            category: p.category
         }));
 
         await Products.bulkCreate(products);

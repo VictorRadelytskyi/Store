@@ -3,15 +3,20 @@ import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 import Login from './components/login/Login';
 import {AuthProvider} from './components/context/AuthContext';
 import Register from './components/Register';
+import Home from './components/Home';
+import Menu from './components/Menu.tsx';
+import Product from './components/products/Product';
 
 function App() {
   return (
       <AuthProvider>
         <Router>
+          <Menu />
           <Routes>
-            <Route path="/" element={<div>Main page</div>} />
+            <Route path="/" element={<Home/>} />
             <Route path="/login" element={<Login/>}/>
             <Route path="/register" element={<Register/>} />
+            <Route path="/products/:id" element={<Product/>} />
           </Routes>
         </Router>
       </AuthProvider>

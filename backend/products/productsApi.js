@@ -5,14 +5,54 @@ import authorize from '../middleware/authorize.js';
 
 const router = Router();
 
-// endpoint to get all products TODO: implement searching
+// endpoint to get all products
 router.get('/', async (req, res) => {
     try{
-        const products = await Products.findAll();
+        let products = await Products.findAll();
+        const query = req.query.query?.trim().toLowerCase();
+        const category = req.query.category?.trim();
+
+        console.log('Received category:', category); // Debug log
+        console.log('Available categories:', [...new Set(products.map(p => p.category))]);
+
+        if (query) {
+            products = products.filter(p => 
+                p.name.toLowerCase().includes(query) || 
+                p.description.toLowerCase().includes(query)
+            );
+        }
+        
+        if (category && category !== 'All Categories') {
+            products = products.filter(p => 
+                p.category.toLowerCase() === category
+            );
+        }
+
         res.status(200).json(products);
     } catch (err){
         console.error(`error getting products ${err}`);
         res.status(500).json({message: 'error getting products'});
+    }
+});
+
+// endpoint to get all products categories
+router.get('/categories', async (req, res) => {
+    try{
+        // select distinct categories from database
+        const categories = await Products.findAll({
+            attributes: ['category'],
+            group: ['category'],
+            raw: true
+        });
+
+        const uniqueCategories = categories
+            .map(item => item.category)
+            .filter(cat => cat != null);;
+
+        res.status(200).json(uniqueCategories);
+    } catch (err){
+        console.error(`error getting categories ${err}`);
+        res.status(500).json({message: 'error getting categories'});
     }
 });
 
@@ -43,7 +83,7 @@ router.get('/:id', async (req, res) => {
 // admin-only endpoint to create product
 router.post('/create', authenticate, authorize(['admin']), async (req, res) => {
     try{
-        const { name, description, price, available } = req.body;
+        const { name, description, price, available, category } = req.body;
         if (!name || !description || price === undefined || available === undefined){
             return res.status(400).json({
                 error: "Parameters name, description, price, and available should be provided"
@@ -78,7 +118,8 @@ router.post('/create', authenticate, authorize(['admin']), async (req, res) => {
             name: name.trim(),
             description: description.trim(),
             price,
-            available
+            available,
+            category: category || null
         });
 
         res.status(201).json({

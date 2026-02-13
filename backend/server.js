@@ -1,5 +1,6 @@
 import express from 'express';
 import axios from 'axios';
+import cors from 'cors';
 import Orders from './orders/ordersApi.js';
 import Products from './products/productsApi.js';
 import Users from './users/usersApi.js';
@@ -21,7 +22,9 @@ if (process.argv[2] === "--with-seed"){
 const app = express();
 
 // Global middleware
+app.use(cors());
 app.use(express.json());
+
 
 // Routes
 app.use('/api/orders', Orders);
