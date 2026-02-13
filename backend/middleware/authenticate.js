@@ -23,6 +23,7 @@ export default function authenticate(req, res, next){
         req.user = decoded;
         next();
     }catch(err){
+        console.error(`Error authenticating: ${err}`);
         return res.status(401).json({
             error: "Failed to authenticate"
         });

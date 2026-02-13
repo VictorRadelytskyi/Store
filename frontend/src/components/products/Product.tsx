@@ -111,7 +111,7 @@ export default function Product(){
                     {error || 'Product not found'}
                     <div className="mt-3">
                         <Button variant="secondary" onClick={() => navigate('/')}>
-                            Back to Home
+                            ← Back to Products
                         </Button>
                     </div>
                 </Alert>

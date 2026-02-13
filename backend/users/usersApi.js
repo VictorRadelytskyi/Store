@@ -279,7 +279,7 @@ router.post('/login', async (req, res) => {
                 });
             }
 
-            const token = generateAccessToken(user);
+            const accessToken = generateAccessToken(user);
             const refreshToken = generateRefreshToken(user);
 
             await Users.update({refreshToken}, {
@@ -290,7 +290,7 @@ router.post('/login', async (req, res) => {
 
             res.status(200).json({
                 message: "Logged in successfully",
-                token,
+                accessToken,
                 refreshToken,
                 userId: user.id,
                 role: user.role

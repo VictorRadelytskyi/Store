@@ -59,7 +59,7 @@ export default function Login(){
                                     required
                                 />
                             </Form.Group>
-                            <Button onClick={handleClick} className="mt-4">
+                            <Button onClick={handleClick} className="mt-4 p-3 px-4">
                                 Log In
                             </Button>
                         </Form>

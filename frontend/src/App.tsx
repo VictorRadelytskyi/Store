@@ -6,6 +6,7 @@ import Register from './components/Register';
 import Home from './components/Home';
 import Menu from './components/Menu.tsx';
 import Product from './components/products/Product';
+import Logout from './components/login/Logout.tsx';
 
 function App() {
   return (
@@ -14,7 +15,8 @@ function App() {
           <Menu />
           <Routes>
             <Route path="/" element={<Home/>} />
-            <Route path="/login" element={<Login/>}/>
+            <Route path="/login" element={<Login/>} />
+            <Route path="/logout" element={<Logout/>} />
             <Route path="/register" element={<Register/>} />
             <Route path="/products/:id" element={<Product/>} />
           </Routes>
