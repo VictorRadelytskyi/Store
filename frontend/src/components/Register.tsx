@@ -60,8 +60,9 @@ export default function Register(){
                         {success && <Alert variant="success" className="mb-2">{success}</Alert>}
                         <Form onSubmit={handleClick}>
                             <Form.Group className="mb-3">
-                                <Form.Label>First Name</Form.Label>
+                                <Form.Label htmlFor="firstName">First Name</Form.Label>
                                 <Form.Control
+                                    id="firstName"
                                     type="text"
                                     value={firstName}
                                     onChange={e => setFirstName(e.target.value)}
@@ -69,8 +70,9 @@ export default function Register(){
                                 />
                             </Form.Group>
                             <Form.Group className="mb-3">
-                                <Form.Label>Last Name</Form.Label>
+                                <Form.Label htmlFor="lastName">Last Name</Form.Label>
                                 <Form.Control
+                                    id="lastName"
                                     type="text"
                                     value={lastName}
                                     onChange={e => setLastName(e.target.value)}
@@ -78,8 +80,9 @@ export default function Register(){
                                 />
                             </Form.Group>
                             <Form.Group className="mb-3">
-                                <Form.Label>Email</Form.Label>
+                                <Form.Label htmlFor="email">Email</Form.Label>
                                 <Form.Control
+                                    id="email"
                                     type="email"
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
@@ -87,8 +90,9 @@ export default function Register(){
                                 />
                             </Form.Group>
                             <Form.Group className="mb-3">
-                                <Form.Label>Password</Form.Label>
+                                <Form.Label htmlFor="password">Password</Form.Label>
                                 <Form.Control
+                                    id="password"
                                     type="password"
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}

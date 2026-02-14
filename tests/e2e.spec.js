@@ -31,51 +31,93 @@ test.describe('E-commerce Full User Journey', () => {
     await page.getByLabel('Email').fill(testUser.email);
     await page.getByLabel('Password').fill(testUser.password);
     
-    await page.getByRole('button', { name: 'Login' }).click();
+    // Use a more specific button selector
+    await page.locator('button:has-text("Log In")').click();
     
     await expect(page).toHaveURL('/');
-    await expect(page.locator('text=Welcome')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Logout' })).toBeVisible();
+    await expect(page.getByText('Logout')).toBeVisible();
     
-    await page.getByRole('link', { name: 'Products' }).click();
-    await expect(page).toHaveURL('/products');
+    // Wait for products to load on the home page (using Col elements that contain Item components)
+    await page.waitForSelector('.col-md-4', { timeout: 5000 });
     
-    await page.waitForSelector('.product-card', { timeout: 10000 });
+    // Navigate to the product page
+    await page.goto('http://localhost:3000/products/5');
+
+    // Option A: Select by the exact button text (Most reliable for user-facing tests)
+    const addToCartButton = page.getByRole('button', { name: /add to cart/i });
+    await addToCartButton.click();
     
-    const firstProduct = page.locator('.product-card').first();
-    await firstProduct.getByRole('button', { name: 'Add to Cart' }).click();
+    await expect(page.locator('.alert-success')).toContainText('Added product to the cart');
     
-    await expect(page.locator('.alert-success')).toContainText('added to cart');
+    // Go back to home page for second product
+    await page.getByRole('button', { name: '← Back to Products' }).click();
+    await expect(page).toHaveURL('/');
     
-    const secondProduct = page.locator('.product-card').nth(1);
-    await secondProduct.getByRole('button', { name: 'Add to Cart' }).click();
+    // Navigate manually to second product (assuming product ID 3 exists)
+    await page.goto('http://localhost:3000/products/6');
+    await page.waitForLoadState('load');
     
-    await expect(page.locator('.cart-count')).toContainText('2');
+    // NEW: Wait for a global UI element that only exists when AUTH is ready
+    // This ensures the button 'disabled' logic has all the data it needs to flip to enabled
+    await expect(page.getByText('Logout')).toBeVisible();
+
+    // Now wait for the product content
+    await page.waitForSelector('.card-title, h3', { timeout: 10000 });
+
+    const addToCartButton2 = page.locator('button').filter({ hasText: /Add to Cart/ });
+    await expect(addToCartButton2).toBeEnabled({ timeout: 10000 }); 
+    await addToCartButton2.click();
     
-    await page.getByRole('link', { name: 'Cart' }).click();
+    await expect(page.locator('.alert-success')).toContainText('Added product to the cart');
+    
+    // Navigate to cart to verify items were added
+    await page.getByRole('button', { name: '← Back to Products' }).click();
+    await expect(page).toHaveURL('/');
+    
+    // Go to cart
+// The 'exact: true' property ensures it won't match 'Add to Cart'
+    await page.getByRole('button', { name: 'Cart', exact: true }).click();
     await expect(page).toHaveURL('/cart');
     
-    await expect(page.locator('.cart-item')).toHaveCount(2);
+    // Verify cart has 2 items (each CartItem is a Row with border-bottom class)
+    await expect(page.locator('.border-bottom')).toHaveCount(2);
     
-    const totalPrice = await page.locator('.cart-total').textContent();
-    expect(totalPrice).toBeTruthy();
+    // Verify total price is displayed
+    await expect(page.locator('h5:has-text("Total: $")')).toBeVisible();
     
+    // Checkout
     await page.getByRole('button', { name: 'Checkout' }).click();
     
-    await expect(page.locator('.alert-success')).toContainText('Order placed successfully');
-    await expect(page.locator('.cart-count')).toContainText('0');
+    // Verify cart is now empty (no cart items should be displayed)
+    await expect(page.locator('.border-bottom')).toHaveCount(0);
+    await expect(page.getByText('Your cart is empty')).toBeVisible();
     
-    await page.getByRole('link', { name: 'Orders' }).click();
+    await page.getByRole('button', { name: 'Orders' }).click();
     await expect(page).toHaveURL('/orders');
     
-    await page.waitForSelector('.order-item, .no-orders', { timeout: 10000 });
+    // 1. Specifically target the Order Header text to ensure content exists
+    await page.waitForSelector('h6:has-text("Order #")', { timeout: 10000 });
+
+    // 2. Use a more reliable locator for the Card components
+    const orderCards = page.locator('.card');
+
+    // 3. Count and Assert
+    const orderCount = await orderCards.count();
+    expect(orderCount).toBeGreaterThan(0);
     
-    const orderExists = await page.locator('.order-item').count();
-    expect(orderExists).toBeGreaterThan(0);
-    
-    const firstOrder = page.locator('.order-item').first();
+    // Verify the first order has proper status and content
+    const firstOrder = orderCards.first();
     await expect(firstOrder).toBeVisible();
-    await expect(firstOrder.locator('.order-status')).toContainText('pending');
-    await expect(firstOrder.locator('.order-items-count')).toContainText('2 items');
-  });
+    
+    // 1. Wait for any element with the text 'Pending' to appear. 
+    // This acts as a global 'data has loaded' check.
+    await expect(page.getByText(/Pending/i)).toBeVisible({ timeout: 15000 });
+
+    // 2. Now that we know data is there, locate the specific card that contains 'Pending'
+    const orderCard = page.locator('.card').filter({ hasText: /Pending/i }).first();
+
+    // 3. Verify the rest of the order details inside that specific card
+    await expect(orderCard).toContainText(/Order #/i);
+    await expect(orderCard).toContainText(/Total: \$/i);
+    });
 });

@@ -49,8 +49,9 @@ export default function Login(){
                         {error && <Alert variant="danger">{error}</Alert>}
                         <Form>
                             <Form.Group className="mb-3">
-                                <Form.Label>Email</Form.Label>
+                                <Form.Label htmlFor="loginEmail">Email</Form.Label>
                                 <Form.Control
+                                    id="loginEmail"
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -58,8 +59,9 @@ export default function Login(){
                                 />
                             </Form.Group>
                             <Form.Group>
-                                <Form.Label>Password</Form.Label>
+                                <Form.Label htmlFor="loginPassword">Password</Form.Label>
                                 <Form.Control
+                                    id="loginPassword"
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
