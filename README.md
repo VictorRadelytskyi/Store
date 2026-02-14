@@ -38,11 +38,9 @@ cd store
 docker-compose up --build
 
 # Access the application
-# Frontend: http://localhost:5000
+# Frontend: http://localhost:3000
 # Backend API: http://localhost:5000/api
 ```
-
-## Development Setup
 
 ## Development Setup
 
