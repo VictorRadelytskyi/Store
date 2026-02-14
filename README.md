@@ -93,10 +93,12 @@ npm run test:report
 - Order placement and verification
 - Multi-browser support (Chromium, Firefox, WebKit)
 
+  <img width="1402" height="1053" alt="image" src="https://github.com/user-attachments/assets/bc0cf410-7f94-4886-bd5c-8e1d164acb8a" />
+
 **Prerequisites for testing:**
 - Application must be running (either via Docker Compose or manual setup)
 - Backend seeded with test data
-- Frontend accessible at http://localhost:5000
+- Frontend accessible at http://localhost:3000
 
 ## Default Users
 
