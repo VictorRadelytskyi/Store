@@ -106,13 +106,13 @@ The system comes with two pre-configured users:
 
 ### Admin User
 - **Email:** `admin@store.com`
-- **Password:** `admin123456789`
+- **Password:** `4dmin_P4$$_h4rd`
 - **Role:** Administrator
 - **Access:** Full comment management, order management, user management (NO GUI)
 
 ### Regular User
 - **Email:** `victor@store.com` 
-- **Password:** `victor123456789`
+- **Password:** `Victor_BigPass!`
 - **Role:** Customer
 - **Access:** Product browsing, cart management, order placement, reviews
 
